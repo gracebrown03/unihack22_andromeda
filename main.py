@@ -7,9 +7,12 @@ import cv2
 import depthai as dai
 import numpy as np
 import time
+from fer import FER
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-name", "--name", type=str, help="Name of the person for database saving")
+
+timeComp = time.time()
 
 args = parser.parse_args()
 
@@ -280,13 +283,34 @@ with dai.Device(create_pipeline()) as device:
             }
 
         if frame is not None:
-            print(type(frame))
+            crop_img = frame
+            temp_flag = False
             for name, result in results.items():
                 if time.time() - result["ts"] < 0.15:
                     text.drawContours(frame, result['points'])
                     text.putText(frame, f"{name} {(100*result['conf']):.0f}%", result['coords'])
+                    # print(result['points'])
+                    points = result['points']
+                    maxX = max(points[0][0], points[1][0], points[2][0], points[3][0])
+                    maxY = max(points[0][1], points[1][1], points[2][1], points[3][1])
+                    minX = min(points[0][0], points[1][0], points[2][0], points[3][0])
+                    minY = min(points[0][1], points[1][1], points[2][1], points[3][1])
+                    crop_img = frame[minY:maxY, minX:maxX]
+                    temp_flag = True
 
-            cv2.imshow("color", cv2.resize(frame, (800,800)))
+            if time.time() - timeComp > 10 and temp_flag:
+                timeComp = time.time()
+
+                emo_detector = FER(mtcnn=True)
+
+                captured_emotions = emo_detector.detect_emotions(crop_img)
+                # Print all captured emotions with the image
+                print(captured_emotions)
+
+            cv2.imshow("color", cv2.resize(crop_img, (800,800)))
+
+
+            # cv2.imshow("color", cv2.resize(frame, (800,800)))
 
         if DISPLAY_FACE and faceQ.has():
             cv2.imshow('face', faceQ.get().getCvFrame())
