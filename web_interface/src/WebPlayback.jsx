@@ -39,7 +39,7 @@ const text = {
 function WebPlayback(props) {
 
     const [is_paused, setPaused] = useState(false);
-    const [is_active, setActive] = useState(false);
+    const [is_active, setActive] = useState(true);
     const [showElement, setShowElement] = useState(true);
     const [player, setPlayer] = useState(undefined);
     const [current_track, setTrack] = useState(track);
@@ -50,50 +50,52 @@ function WebPlayback(props) {
         const script = document.createElement("script");
         script.src = "https://sdk.scdn.co/spotify-player.js";
         script.async = true;
-
+        
         document.body.appendChild(script);
 
-        window.onSpotifyWebPlaybackSDKReady = () => {
+        setTimeout(function () {
+            setShowElement(false);
+          }, 10000);
+          
+        // window.onSpotifyWebPlaybackSDKReady = () => {
 
-            const player = new window.Spotify.Player({
-                name: 'Web Playback SDK',
-                getOAuthToken: cb => { cb(props.token); },
-                volume: 0.5
-            });
+        //     const player = new window.Spotify.Player({
+        //         name: 'Web Playback SDK',
+        //         getOAuthToken: cb => { cb(props.token); },
+        //         volume: 0.5
+        //     });
 
-            setPlayer(player);
+        //     setPlayer(player);
 
-            player.addListener('ready', ({ device_id }) => {
-                console.log('Ready with Device ID', device_id);
-            });
+        //     player.addListener('ready', ({ device_id }) => {
+        //         console.log('Ready with Device ID', device_id);
+        //     });
 
-            player.addListener('not_ready', ({ device_id }) => {
-                console.log('Device ID has gone offline', device_id);
-            });
+        //     player.addListener('not_ready', ({ device_id }) => {
+        //         console.log('Device ID has gone offline', device_id);
+        //     });
 
-            player.addListener('player_state_changed', ( state => {
+        //     player.addListener('player_state_changed', ( state => {
 
-                if (!state) {
-                    return;
-                }
+        //         if (!state) {
+        //             return;
+        //         }
                 
-                setTrack(state.track_window.current_track);
-                setPaused(state.paused);
+        //         setTrack(state.track_window.current_track);
+        //         setPaused(state.paused);
 
-                player.getCurrentState().then( state => { 
-                    (!state)? setActive(false) : setActive(true) 
-                });
+        //         player.getCurrentState().then( state => { 
+        //             (!state)? setActive(false) : setActive(true) 
+        //         });
 
-            }));
+        //     }));
 
-            setTimeout(function () {
-                setShowElement(false);
-              }, 10000);
+            
             
 
-            player.connect();
+        //     player.connect();
 
-        };
+        // };
     }, []);
 
     if (!is_active) { 
@@ -191,14 +193,15 @@ function WebPlayback(props) {
     } else {
         return (
             <>
-                <div className="container">
+{/* My internet went down, so have to hard code most of it because I can't use spotify api */}
+<div className="container">
                     <div className="main-wrapper">
 
-                        <img src={current_track.album.images[0].url} className="now-playing__cover" alt="" />
+                        <img src={"https://i.scdn.co/image/ab67616d0000b273e8107e6d9214baa81bb79bba"}  className="now-playing__cover" alt="" />
 
                         <div className="now-playing__side">
-                            <div className="now-playing__name">{current_track.name}</div>
-                            <div className="now-playing__artist">{current_track.artists[0].name}</div>
+                            <div className="now-playing__name">{"Happy - From \"Despicable Me 2\""}</div>
+                            <div className="now-playing__artist">{"Pharrell Williams"}</div>
 
                             <button className="btn-spotify" onClick={() => { player.previousTrack() }} >
                                 &lt;&lt;
@@ -219,44 +222,63 @@ function WebPlayback(props) {
                 <div className='container'>
                     <h2>Queued</h2>
                 </div>
-                <div className="list-container">
-                    <div className="main-list" >
-                        <List sx={{ width: '100%', maxWidth: 600 }}>
-                            <ListItem>
-                                <img src={current_track.album.images[0].url} className="next-up__cover" alt="" />
-                                <ListItemText primaryTypographyProps={{ style: title }} primary={current_track.name} secondaryTypographyProps={{ style: text }} secondary={current_track.artists[0].name} />
-                            </ListItem>
-                            <ListItem>
-                                <img src={current_track.album.images[0].url} className="next-up__cover" alt="" />
-                                <ListItemText primaryTypographyProps={{ style: title }} primary={current_track.name} secondaryTypographyProps={{ style: text }} secondary={current_track.artists[0].name} />
-                            </ListItem>
-                            <ListItem>
-                                <img src={current_track.album.images[0].url} className="next-up__cover" alt="" />
-                                <ListItemText primaryTypographyProps={{ style: title }} primary={current_track.name} secondaryTypographyProps={{ style: text }} secondary={current_track.artists[0].name} />
-                            </ListItem>
-                            <ListItem>
-                                <img src={current_track.album.images[0].url} className="next-up__cover" alt="" />
-                                <ListItemText primaryTypographyProps={{ style: title }} primary={current_track.name} secondaryTypographyProps={{ style: text }} secondary={current_track.artists[0].name} />
-                            </ListItem>
-                            <ListItem>
-                                <img src={current_track.album.images[0].url} className="next-up__cover" alt="" />
-                                <ListItemText primaryTypographyProps={{ style: title }} primary={current_track.name} secondaryTypographyProps={{ style: text }} secondary={current_track.artists[0].name} />
-                            </ListItem>
-                            {/* <List>
-                                {generate(
+
+                {showElement ? (
+                        <div className="list-container">
+                        <div className="main-list" >
+                            <List sx={{ width: '100%', maxWidth: 600 }}>
                                     <ListItem>
-                                        <img src={current_track.album.images[0].url} className="next-up__cover" alt="" />
-                                    <ListItemText
-                                        primaryTypographyProps={{ style: title }} primary={next_track.name} secondaryTypographyProps={{ style: text }} secondary={next_track.artists[0].name} 
-
-                                    />
+                                        <img src={"https://i.scdn.co/image/ab67616d0000b273e419ccba0baa8bd3f3d7abf2"} className="next-up__cover" alt="" />
+                                        <ListItemText primaryTypographyProps={{ style: title }} primary={"Uptown Funk (feat. Bruno Mars)"} secondaryTypographyProps={{ style: text }} secondary={"Mark Ronson, Bruno Mars"} />
                                     </ListItem>
-                                )}
-                            </List> */}
-
-                        </List>
-                    </div>
-                </div>
+                                    <ListItem>
+                                        <img src={"https://i.scdn.co/image/ab67616d0000b273ef37416970812293c08e8a78"} className="next-up__cover" alt="" />
+                                        <ListItemText primaryTypographyProps={{ style: title }} primary={"CAN'T STOP THE FEELING! (from DreamWorks Animation's \"TROLLS\")"} secondaryTypographyProps={{ style: text }} secondary={"Justin Timberlake"} />
+                                    </ListItem>
+                                    <ListItem>
+                                        <img src={"https://i.scdn.co/image/ab67616d0000b27352b2a3824413eefe9e33817a"} className="next-up__cover" alt="" />
+                                        <ListItemText primaryTypographyProps={{ style: title }} primary={"Shake It Off"} secondaryTypographyProps={{ style: text }} secondary={"Taylor Swift"} />
+                                    </ListItem>
+                                    <ListItem>
+                                        <img src={"https://i.scdn.co/image/ab67616d0000b273e8dd4db47e7177c63b0b7d53"} className="next-up__cover" alt="" />
+                                        <ListItemText primaryTypographyProps={{ style: title }} primary={"Take on Me"} secondaryTypographyProps={{ style: text }} secondary={"a-ha"} />
+                                    </ListItem>
+                                    <ListItem>
+                                        <img src={"https://i.scdn.co/image/ab67616d0000b273240447f2da1433d8f4303596"} className="next-up__cover" alt="" />
+                                        <ListItemText primaryTypographyProps={{ style: title }} primary={"Butter"} secondaryTypographyProps={{ style: text }} secondary={"BTS"} />
+                                    </ListItem>
+                            </List>
+                        </div>
+                        </div>
+                    ) : (
+                        <div className="list-container">
+                        <div className="main-list" >
+                            <List sx={{ width: '100%', maxWidth: 600 }}>
+                                {/* sad songs */}
+                                <ListItem>
+                                    <img src={"https://i.scdn.co/image/ab67616d0000b27312549da864353c084cf0faa6"} className="next-up__cover" alt="" />
+                                    <ListItemText primaryTypographyProps={{ style: title }} primary={"Cross Road Blues"} secondaryTypographyProps={{ style: text }} secondary={"Robert Johnson"} />
+                                </ListItem>
+                                <ListItem>
+                                    <img src={"https://i.scdn.co/image/ab67616d0000b273599bb610f6243326e6176663"} className="next-up__cover" alt="" />
+                                    <ListItemText primaryTypographyProps={{ style: title }} primary={"Born Under A Bad Sign"} secondaryTypographyProps={{ style: text }} secondary={"Albert King"} />
+                                </ListItem>
+                                <ListItem>
+                                    <img src={"https://i.scdn.co/image/ab67616d0000b273621489fd90d50158b3714cb0"} className="next-up__cover" alt="" />
+                                    <ListItemText primaryTypographyProps={{ style: title }} primary={"Mad World (Feat. Michael Andrews)"} secondaryTypographyProps={{ style: text }} secondary={"Gary Jules, Michael Andrews"} />
+                                </ListItem>
+                                <ListItem>
+                                    <img src={"https://i.scdn.co/image/ab67616d0000b273126363a3b84cec538f5e687f"} className="next-up__cover" alt="" />
+                                    <ListItemText primaryTypographyProps={{ style: title }} primary={"Memphis Blues"} secondaryTypographyProps={{ style: text }} secondary={"Jack Dupree, Speckled Red, Memphis Slim, Sunnyland Slim, Eddie Boyd, Little Brother Montgomery"} />
+                                </ListItem>
+                                <ListItem>
+                                    <img src={"https://i.scdn.co/image/ab67616d0000b27390afd8e4ec6d787114ed6c40"} className="next-up__cover" alt="" />
+                                    <ListItemText primaryTypographyProps={{ style: title }} primary={"The Scientist"} secondaryTypographyProps={{ style: text }} secondary={"Coldplay"} />
+                                </ListItem>
+                            </List>
+                        </div>
+                        </div>
+                )};
             </>
         );
     }
