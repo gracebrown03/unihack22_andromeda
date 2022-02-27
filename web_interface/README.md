@@ -1,4 +1,4 @@
-# Web Playback SDK Javascript Tutorial
+# A FORK OF Spotify's Web Playback SDK for Unihack22
 
 This repository contains the source code for the [Web Playback SDK Guide](https://developer.spotify.com/documentation/web-playback-sdk/guide/).
 
