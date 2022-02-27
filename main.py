@@ -7,9 +7,30 @@ import cv2
 import depthai as dai
 import numpy as np
 import time
+from fer import FER
+from random import randint
+import matplotlib.pyplot as plt
+import json
+
+plt.figure(figsize=(9, 9))
+qclear = False
+last = "Top 100"
+output = {
+    "genre" : "Top 100",
+    "bpm" : 120,
+    "qclear" : False
+}
+emotions = ["Angry", "Fear", "Disgust", "Happy", "Sad", "Surprised", "Neutral"]
+genres = ["Heavy Metal", "New Wave", "Rock and Roll", "Pop", "Blues", "Funk", "Top 100"]
+data1 = [randint(0, 10), randint(0, 10), randint(0, 10), randint(0, 10), randint(0, 10), randint(0, 10), randint(0, 10)]
+data = np.array([data1])
+data = np.mean(data, axis=0)
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-name", "--name", type=str, help="Name of the person for database saving")
+
+timeComp = time.time()
 
 args = parser.parse_args()
 
@@ -280,13 +301,83 @@ with dai.Device(create_pipeline()) as device:
             }
 
         if frame is not None:
-            print(type(frame))
+            crop_img = frame
+            temp_flag = False
+            resize_flag = False
             for name, result in results.items():
                 if time.time() - result["ts"] < 0.15:
                     text.drawContours(frame, result['points'])
                     text.putText(frame, f"{name} {(100*result['conf']):.0f}%", result['coords'])
+                    # print(result['points'])
+                    points = result['points']
+                    maxX = max(points[0][0], points[1][0], points[2][0], points[3][0])
+                    maxY = max(points[0][1], points[1][1], points[2][1], points[3][1])
+                    minX = min(points[0][0], points[1][0], points[2][0], points[3][0])
+                    minY = min(points[0][1], points[1][1], points[2][1], points[3][1])
+                    difX = round((maxX-minX)*0.2)
+                    difY = round((maxY-minY)*0.2)
+                    maxX = maxX + difX
+                    maxY = maxY + difY
+                    minX = minX - difX
+                    minY = minY - difY
+                    # print(minX)
+                    crop_img = frame[minY:maxY, minX:maxX]
+                    if crop_img.shape[0] == 0 or crop_img.shape[1] == 0:
+                        resize_flag = True
+                    temp_flag = True
 
-            cv2.imshow("color", cv2.resize(frame, (800,800)))
+            if time.time() - timeComp > 4 and temp_flag and not resize_flag:
+                timeComp = time.time()
+
+                emo_detector = FER(mtcnn=True)
+
+                captured_emotions = emo_detector.detect_emotions(crop_img)
+                if captured_emotions != []:
+                    plt.clf()
+                    data = [captured_emotions[0]['emotions']['angry'], captured_emotions[0]['emotions']['fear'], captured_emotions[0]['emotions']['disgust'], captured_emotions[0]['emotions']['happy'], captured_emotions[0]['emotions']['sad'], captured_emotions[0]['emotions']['surprise'], captured_emotions[0]['emotions']['neutral']]
+                    print(data)
+                    emotions = ["Angry", "Fear", "Disgust", "Happy", "Sad", "Surprised", "Neutral"]
+
+                    emotions = [*emotions, emotions[0]]
+                    data = [*data, data[0]]
+
+                    mood = emotions[data.index(max(data))]
+                    music = genres[data.index(max(data))]
+                    bpm = round((((max(data) - 0) * (180 - 80)) / (10 - 0)) + 80)
+                    # Plotting
+                    plt.subplot(polar=True)
+                    label_loc = np.linspace(start=0, stop=2*np.pi, num=len(data))
+                    plt.plot(label_loc, data)
+                    lines, labels = plt.thetagrids(np.degrees(label_loc), labels=emotions)
+                    ax = plt.gca()
+                    ax.set_ylim([0, 10])
+                    plt.suptitle(mood, fontsize=36)
+                    plt.title(music+" "+str(bpm)+"bpm", fontsize=18)
+                    plt.draw()
+
+                    # Clear Q if mood has changed
+                    if music != last:
+                        qclear = True
+                        last = music
+
+                    output = {
+                        "genre" : music,
+                        "bpm" : bpm,
+                        "qclear" : qclear
+                    }
+
+                    with open('song.json', 'w') as f:
+                        json.dump(output, f)
+
+                # Print all captured emotions with the image
+                print(captured_emotions)
+                print("//")
+
+            if not resize_flag:
+                cv2.imshow("color", cv2.resize(crop_img, (800,800)))
+
+
+            # cv2.imshow("color", cv2.resize(frame, (800,800)))
 
         if DISPLAY_FACE and faceQ.has():
             cv2.imshow('face', faceQ.get().getCvFrame())
